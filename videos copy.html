@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://www.gstatic.com/firebasejs/7.17.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.17.2/firebase-storage.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+            text-align: center;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            text-align: center;
+        }
+
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #e67300;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #cc5500;
+        }
+
+        #videos-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .video-container {
+            position: relative;
+            padding: 10px;
+            margin: 10px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        video {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .delete-button {
+            background-color: #cc0000;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .delete-button:hover {
+            background-color: #990000;
+        }
+
+        #empty-message {
+            font-size: 18px;
+            color: #333;
+            margin-top: 20px;
+        }
+    </style>
+    <title>Video Display</title>
+</head>
+<body>
+    <header>
+        <a href="/">Go back</a>
+    </header>
+    <h1>Your Videos</h1>
+    <div id="videos-container"></div>
+</body>
+</html>
+<script>
+    const firebaseConfig = {
+        storageBucket: "hello-world-c054a.appspot.com",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+    const userId = localStorage.getItem("hackPongal");
+    const storageRef = storage.ref('hackPongal/' + userId);
+
+    storageRef.listAll().then(function (result) {
+        if (result.items.length === 0) {
+            displayEmptyMessage();
+        } else {
+            result.items.forEach(function (itemRef) {
+                storageRef.child(itemRef.name).getDownloadURL().then(function (url) {
+                    createVideoContainer(url, itemRef);
+                }).catch(function (error) {
+                    console.error('Error getting download URL:', error);
+                });
+            });
+        }
+    }).catch(function (error) {
+        console.error('Error listing items:', error);
+    });
+
+    function createVideoContainer(url, itemRef) {
+        var videoContainer = document.createElement('div');
+        videoContainer.className = 'video-container';
+
+        var videoElement = document.createElement('video');
+        videoElement.controls = true;
+        videoElement.src = url;
+
+        var deleteButton = document.createElement('button');
+        deleteButton.innerHTML = 'Delete';
+        deleteButton.className = 'delete-button';
+
+        deleteButton.addEventListener('click', function () {
+            storageRef.child(itemRef.name).delete().then(function () {
+                videoContainer.remove();
+                alert("Video deleted successfully");
+            }).catch(function (error) {
+                console.error('Error deleting file:', error);
+                alert("Error deleting video");
+            });
+        });
+
+
+        videoContainer.appendChild(videoElement);
+        videoContainer.appendChild(deleteButton);
+        document.getElementById('videos-container').appendChild(videoContainer);
+    }
+
+    function displayEmptyMessage() {
+        var emptyMessage = document.createElement('div');
+        emptyMessage.id = 'empty-message';
+        emptyMessage.innerText = 'No videos available.';
+
+        document.getElementById('videos-container').appendChild(emptyMessage);
+    }
+</script>

